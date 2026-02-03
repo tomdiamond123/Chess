@@ -53,7 +53,7 @@ board = np.array([
     ["BR", "__", "__", "__", "__", "BK", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["WP", "__", "__", "__", "BN", "__", "__", "__"],
+    ["WP", "__", "BQ", "__", "BN", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "BB", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
@@ -197,14 +197,66 @@ def knightMoves(board, col, row):
                 moves.append((c, r))
             elif sq[0] != side:
                 moves.append((c, r))
-                break
+                continue
             else:
-                break
+                continue
         else:
-            break
+            continue
     
     return moves
 
+def queenMoves(board, col, row):
+    moves = []
+    side = board[row][col][0]
+
+    directions = [(-1, -1), (1, -1), (-1, 1), (1, 1), (1,0), (0,1), (-1,0), (0,-1)]
+
+    for dc, dr in directions:
+        r, c = row, col
+        while True:
+            r += dr
+            c += dc
+            if 0 <= r < 8 and 0 <= c < 8:
+                sq = board[r][c]
+                if sq == "__":
+                    moves.append((c, r))
+                elif sq[0] != side:
+                    moves.append((c, r))
+                    break
+                else:
+                    break
+            else:
+                break
+
+    return moves
+
+def pawnMoves(board, col, row):
+    moves = []
+    side = board[row][col][0]
+
+    if board[row-1][col] == "__":
+        moves.append((col, row-1))
+    if col < 7:
+        if board[row-1][col+1][0] != side and board[row-1][col+1] != "__":
+            moves.append((col+1, row-1))
+    if col > 0:
+        if board[row-1][col-1][0] != side and board[row-1][col-1] != "__":
+            moves.append((col-1, row-1))
+    if row == 6:
+        if board[row-2][col] == "__":
+            moves.append((col, row-2))
+
+def kingMoves(board, col, row):
+    moves = []
+    side = board[row][col][0]
+
+    directions = [(-1, -1), (1, -1), (-1, 1), (1, 1), (1,0), (0,1), (-1,0), (0,-1)]
+
+    for dc, dr in directions:
+        if board[row+dr][col+dc] == "__" or board[row+dr][col+dc] != side:
+            moves.append((col+dc, row+dr))
+
+    return moves
 
 def calculateLegalMoves(board, col, row):
     moves = []
@@ -215,10 +267,16 @@ def calculateLegalMoves(board, col, row):
 
     if piece == "R":
         moves.extend(rookMoves(board, col, row))
-    if piece == "B":
+    elif piece == "B":
         moves.extend(bishopMoves(board, col, row))
-    if piece == "N":
+    elif piece == "N":
         moves.extend(knightMoves(board, col, row))
+    elif piece == "Q":
+        moves.extend(queenMoves(board, col, row))
+    elif piece == "P":
+        moves.extend(pawnMoves(board, col, row))
+    elif piece == "K":
+        moves.extend(kingMoves(board, col, row))
 
     return moves
 
@@ -257,9 +315,9 @@ while not exit:
         
 
     displayBoard(GREEN,TAN, highlightedSquare)
-    displayPieces(board)
     legalMoves = calculateLegalMoves(board, highlightedSquare[0], highlightedSquare[1]) if highlightedSquare and highlighted else []
     drawLegalMoves(legalMoves)
+    displayPieces(board)
 
     pygame.display.update()
-    clock.tick(2)
+    clock.tick(60)
