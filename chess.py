@@ -17,6 +17,8 @@ SQUARESIZE = DIMENSION // 8
 canvas = pygame.display.set_mode((DIMENSION,DIMENSION))
 pygame.display.set_caption("Chess")
 
+clock = pygame.time.Clock()
+
 #Load Pieces
 BLACKROOK = pygame.image.load('pieces/BlackRook.png').convert_alpha()
 BLACKKNIGHT = pygame.image.load('pieces/BlackKnight.png').convert_alpha()
@@ -35,14 +37,24 @@ WHITEPAWN = pygame.image.load('pieces/WhitePawn.png').convert_alpha()
 board = np.array([
     ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
     ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
-    ["_", "_", "_", "_", "_", "_", "_", "_"],
-    ["_", "_", "_", "_", "_", "_", "_", "_"],
-    ["_", "_", "_", "_", "_", "_", "_", "_"],
-    ["_", "_", "_", "_", "_", "_", "_", "_"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
     ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
     ])
 #board = np.flip(board)
+# board = np.array([
+#     ["BR", "__", "__", "__", "__", "BK", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["WP", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+# ])
 
 def displayBoard(colour1, colour2, highlight):
     for row in range(8):
@@ -60,7 +72,8 @@ def highlightSquare():
     col = mouse_x // SQUARESIZE
     row = mouse_y // SQUARESIZE
     if 0 <= row < 8 and 0 <= col < 8:
-        return (row, col)
+        if board[row][col] != "__":
+            return (row, col)
     return None
 
 
@@ -92,12 +105,73 @@ def displayPieces(board):
             elif square == "WP":
                 canvas.blit(WHITEPAWN, (x * SQUARESIZE, y * SQUARESIZE))
 
+def rookMoves(board, col, row):
+    moves = []
+    side = board[row][col][0]
+
+    # Rook moves
+    # up
+    for r in range(row-1, -1, -1):
+        sq = board[r][col]
+        if sq == "__":
+            moves.append((col, r))
+        elif sq[0] != side:
+            moves.append((col, r))
+            break
+        else:
+            break
+    # down
+    for r in range(row+1, 8):
+        sq = board[r][col]
+        if sq == "__":
+            moves.append((col, r))
+        elif sq[0] != side:
+            moves.append((col, r))
+            break
+        else:
+            break
+    # left
+    for c in range(col-1, -1, -1):
+        sq = board[row][c]
+        if sq == "__":
+            moves.append((c, row))
+        elif sq[0] != side:
+            moves.append((c, row))
+            break
+        else:
+            break
+    # right
+    for c in range(col+1, 8):
+        sq = board[row][c]
+        if sq == "__":
+            moves.append((c, row))
+        elif sq[0] != side:
+            moves.append((c, row))
+            break
+        else:
+            break
+
+    return moves
+
+def calculateLegalMoves(board, col, row):
+    moves = []
+    if board[row][col] == "__":
+        return moves
+    side = board[row][col][0]
+    piece = board[row][col][1]
+
+    if piece == "R":
+        moves.extend(rookMoves(board, col, row))
+
+    return moves
+
 
 
 #main loop
 exit = False
 mouseDown = False
 highlightedSquare = None
+highlighted = False
 
 while not exit:
     canvas.fill(BLACK)
@@ -109,10 +183,18 @@ while not exit:
             mouseDown = True
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and mouseDown == True:
             mouseDown = False
-            highlightedSquare = highlightSquare()
+            if highlightedSquare != highlightSquare() or highlightedSquare == None:
+                highlightedSquare = highlightSquare()
+                highlighted = True
+            else:
+                highlightedSquare = None
+                highlighted = False
         
 
     displayBoard(GREEN,TAN, highlightedSquare)
     displayPieces(board)
+    legalMoves = calculateLegalMoves(board, 0,0)
+    print(legalMoves)
 
     pygame.display.update()
+    clock.tick(2)
