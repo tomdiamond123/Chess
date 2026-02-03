@@ -38,16 +38,16 @@ CIRCLE = pygame.image.load('images/circle.png').convert_alpha()
 CIRCLEOUTLINE = pygame.image.load('images/circleoutline.png').convert_alpha()
 
 # K is King and N is Knight
-board = np.array([
-    ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
-    ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
-    ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
-    ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
-    ])
+# board = np.array([
+#     ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
+#     ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
+#     ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
+#     ])
 #board = np.flip(board)
 board = np.array([
     ["BR", "__", "__", "__", "__", "BK", "__", "__"],
@@ -55,7 +55,7 @@ board = np.array([
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["WP", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "BB", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
 ])
@@ -63,7 +63,7 @@ board = np.array([
 def displayBoard(colour1, colour2, highlight):
     for row in range(8):
         for col in range(8):
-            if highlight is not None and (row, col) == highlight:
+            if highlight is not None and (col, row) == highlight:
                 colour = HIGHLIGHT
             elif (row+col)%2:
                 colour = colour1
@@ -77,7 +77,7 @@ def highlightSquare():
     row = mouse_y // SQUARESIZE
     if 0 <= row < 8 and 0 <= col < 8:
         if board[row][col] != "__":
-            return (row, col)
+            return (col, row)
     return None
 
 
@@ -157,6 +157,33 @@ def rookMoves(board, col, row):
 
     return moves
 
+def bishopMoves(board, col, row):
+    moves = []
+    side = board[row][col][0]
+
+    directions = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+
+    for dc, dr in directions:
+        r, c = row, col
+        while True:
+            r += dr
+            c += dc
+            if 0 <= r < 8 and 0 <= c < 8:
+                sq = board[r][c]
+                if sq == "__":
+                    moves.append((c, r))
+                elif sq[0] != side:
+                    moves.append((c, r))
+                    break
+                else:
+                    break
+            else:
+                break
+
+    return moves
+
+
+
 def calculateLegalMoves(board, col, row):
     moves = []
     if board[row][col] == "__":
@@ -166,6 +193,8 @@ def calculateLegalMoves(board, col, row):
 
     if piece == "R":
         moves.extend(rookMoves(board, col, row))
+    if piece == "B":
+        moves.extend(bishopMoves(board, col, row))
 
     return moves
 
@@ -207,7 +236,6 @@ while not exit:
     displayPieces(board)
     legalMoves = calculateLegalMoves(board, highlightedSquare[0], highlightedSquare[1]) if highlightedSquare and highlighted else []
     drawLegalMoves(legalMoves)
-    #print(legalMoves)
 
     pygame.display.update()
     clock.tick(2)
