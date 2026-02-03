@@ -20,18 +20,22 @@ pygame.display.set_caption("Chess")
 clock = pygame.time.Clock()
 
 #Load Pieces
-BLACKROOK = pygame.image.load('pieces/BlackRook.png').convert_alpha()
-BLACKKNIGHT = pygame.image.load('pieces/BlackKnight.png').convert_alpha()
-BLACKBISHOP = pygame.image.load('pieces/BlackBishop.png').convert_alpha()
-BLACKQUEEN = pygame.image.load('pieces/BlackQueen.png').convert_alpha()
-BLACKKING = pygame.image.load('pieces/BlackKing.png').convert_alpha()
-BLACKPAWN = pygame.image.load('pieces/BlackPawn.png').convert_alpha()
-WHITEROOK = pygame.image.load('pieces/WhiteRook.png').convert_alpha()
-WHITEKNIGHT = pygame.image.load('pieces/WhiteKnight.png').convert_alpha()
-WHITEBISHOP = pygame.image.load('pieces/WhiteBishop.png').convert_alpha()
-WHITEQUEEN = pygame.image.load('pieces/WhiteQueen.png').convert_alpha()
-WHITEKING = pygame.image.load('pieces/WhiteKing.png').convert_alpha()
-WHITEPAWN = pygame.image.load('pieces/WhitePawn.png').convert_alpha()
+BLACKROOK = pygame.image.load('images/BlackRook.png').convert_alpha()
+BLACKKNIGHT = pygame.image.load('images/BlackKnight.png').convert_alpha()
+BLACKBISHOP = pygame.image.load('images/BlackBishop.png').convert_alpha()
+BLACKQUEEN = pygame.image.load('images/BlackQueen.png').convert_alpha()
+BLACKKING = pygame.image.load('images/BlackKing.png').convert_alpha()
+BLACKPAWN = pygame.image.load('images/BlackPawn.png').convert_alpha()
+WHITEROOK = pygame.image.load('images/WhiteRook.png').convert_alpha()
+WHITEKNIGHT = pygame.image.load('images/WhiteKnight.png').convert_alpha()
+WHITEBISHOP = pygame.image.load('images/WhiteBishop.png').convert_alpha()
+WHITEQUEEN = pygame.image.load('images/WhiteQueen.png').convert_alpha()
+WHITEKING = pygame.image.load('images/WhiteKing.png').convert_alpha()
+WHITEPAWN = pygame.image.load('images/WhitePawn.png').convert_alpha()
+
+#load circle
+CIRCLE = pygame.image.load('images/circle.png').convert_alpha()
+CIRCLEOUTLINE = pygame.image.load('images/circleoutline.png').convert_alpha()
 
 # K is King and N is Knight
 board = np.array([
@@ -45,16 +49,16 @@ board = np.array([
     ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
     ])
 #board = np.flip(board)
-# board = np.array([
-#     ["BR", "__", "__", "__", "__", "BK", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["WP", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-# ])
+board = np.array([
+    ["BR", "__", "__", "__", "__", "BK", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["WP", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+    ["__", "__", "__", "__", "__", "__", "__", "__"],
+])
 
 def displayBoard(colour1, colour2, highlight):
     for row in range(8):
@@ -165,6 +169,14 @@ def calculateLegalMoves(board, col, row):
 
     return moves
 
+def drawLegalMoves(moves):
+    for move in moves:
+        x, y = move
+        if board[y][x] == "__":
+            canvas.blit(CIRCLE, (x*SQUARESIZE+30, y*SQUARESIZE+30))
+        else:
+            canvas.blit(CIRCLEOUTLINE, (x*SQUARESIZE, y*SQUARESIZE))
+
 
 
 #main loop
@@ -193,8 +205,9 @@ while not exit:
 
     displayBoard(GREEN,TAN, highlightedSquare)
     displayPieces(board)
-    legalMoves = calculateLegalMoves(board, 0,0)
-    print(legalMoves)
+    legalMoves = calculateLegalMoves(board, highlightedSquare[0], highlightedSquare[1]) if highlightedSquare and highlighted else []
+    drawLegalMoves(legalMoves)
+    #print(legalMoves)
 
     pygame.display.update()
     clock.tick(2)
