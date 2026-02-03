@@ -53,7 +53,7 @@ board = np.array([
     ["BR", "__", "__", "__", "__", "BK", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["WP", "__", "__", "__", "__", "__", "__", "__"],
+    ["WP", "__", "__", "__", "BN", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "BB", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
@@ -182,6 +182,28 @@ def bishopMoves(board, col, row):
 
     return moves
 
+def knightMoves(board, col, row):
+    moves = []
+    side = board[row][col][0]
+
+    directions = [(1,2), (2,1), (1,-2), (-1, 2), (-2, 1), (2, -1), (-2, -1), (-1, -2)]
+    for dc, dr in directions:
+        r, c = row, col
+        r += dr
+        c += dc
+        if 0 <= r < 8 and 0 <= c < 8:
+            sq = board[r][c]
+            if sq == "__":
+                moves.append((c, r))
+            elif sq[0] != side:
+                moves.append((c, r))
+                break
+            else:
+                break
+        else:
+            break
+    
+    return moves
 
 
 def calculateLegalMoves(board, col, row):
@@ -195,6 +217,8 @@ def calculateLegalMoves(board, col, row):
         moves.extend(rookMoves(board, col, row))
     if piece == "B":
         moves.extend(bishopMoves(board, col, row))
+    if piece == "N":
+        moves.extend(knightMoves(board, col, row))
 
     return moves
 
