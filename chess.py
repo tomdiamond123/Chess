@@ -38,27 +38,27 @@ CIRCLE = pygame.image.load('images/circle.png').convert_alpha()
 CIRCLEOUTLINE = pygame.image.load('images/circleoutline.png').convert_alpha()
 
 # K is King and N is Knight
-# board = np.array([
-#     ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
-#     ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["__", "__", "__", "__", "__", "__", "__", "__"],
-#     ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
-#     ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
-#     ])
-#board = np.flip(board)
 board = np.array([
-    ["BR", "__", "__", "__", "__", "BK", "__", "__"],
+    ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
+    ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["WP", "__", "BQ", "__", "BN", "__", "__", "__"],
-    ["__", "__", "__", "__", "__", "__", "__", "__"],
-    ["__", "__", "BB", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
     ["__", "__", "__", "__", "__", "__", "__", "__"],
-])
+    ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
+    ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
+    ])
+#board = np.flip(board)
+# board = np.array([
+#     ["BR", "__", "__", "__", "__", "BK", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["WP", "__", "BQ", "__", "BN", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "BB", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+#     ["__", "__", "__", "__", "__", "__", "__", "__"],
+# ])
 
 def displayBoard(colour1, colour2, highlight):
     for row in range(8):
@@ -71,15 +71,22 @@ def displayBoard(colour1, colour2, highlight):
                 colour = colour2
             pygame.draw.rect(canvas, colour, pygame.Rect(SQUARESIZE*col,SQUARESIZE*row,SQUARESIZE,SQUARESIZE))
 
-def highlightSquare():
+def highlightSquare(side):
     mouse_x, mouse_y = pygame.mouse.get_pos()
     col = mouse_x // SQUARESIZE
     row = mouse_y // SQUARESIZE
     if 0 <= row < 8 and 0 <= col < 8:
-        if board[row][col] != "__":
+        if board[row][col][0] == side:
             return (col, row)
     return None
 
+def getCurrentMouseSquare():
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    col = mouse_x // SQUARESIZE
+    row = mouse_y // SQUARESIZE
+    if 0 <= row < 8 and 0 <= col < 8:
+        return (col, row)
+    return None
 
 def displayPieces(board):
     for y, row in enumerate(board):
@@ -246,6 +253,8 @@ def pawnMoves(board, col, row):
         if board[row-2][col] == "__":
             moves.append((col, row-2))
 
+    return moves
+
 def kingMoves(board, col, row):
     moves = []
     side = board[row][col][0]
@@ -253,8 +262,12 @@ def kingMoves(board, col, row):
     directions = [(-1, -1), (1, -1), (-1, 1), (1, 1), (1,0), (0,1), (-1,0), (0,-1)]
 
     for dc, dr in directions:
-        if board[row+dr][col+dc] == "__" or board[row+dr][col+dc] != side:
-            moves.append((col+dc, row+dr))
+        try:
+            if board[row+dr][col+dc] == "__" or board[row+dr][col+dc][0] != side:
+                moves.append((col+dc, row+dr))
+        except IndexError:
+            #Checking square that doesn't exist
+            pass
 
     return moves
 
@@ -288,13 +301,17 @@ def drawLegalMoves(moves):
         else:
             canvas.blit(CIRCLEOUTLINE, (x*SQUARESIZE, y*SQUARESIZE))
 
-
+def movePiece(board,newcol, newrow, oldcol, oldrow):
+    board[newrow][newcol] = board[oldrow][oldcol]
+    board[oldrow][oldcol] = "__"
+    return board
 
 #main loop
 exit = False
 mouseDown = False
 highlightedSquare = None
 highlighted = False
+side = "W"
 
 while not exit:
     canvas.fill(BLACK)
@@ -306,15 +323,28 @@ while not exit:
             mouseDown = True
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and mouseDown == True:
             mouseDown = False
-            if highlightedSquare != highlightSquare() or highlightedSquare == None:
-                highlightedSquare = highlightSquare()
+            if getCurrentMouseSquare() in legalMoves:
+                newcol, newrow = getCurrentMouseSquare()
+                oldcol, oldrow = highlightedSquare
+                board = movePiece(board, newcol, newrow, oldcol, oldrow)
+                if side == "W":
+                    side = "B"
+                else:
+                    side = "W"
+                board = np.flip(board)
+                highlightedSquare = None
+                highlighted = False
+            elif highlightedSquare != highlightSquare(side) or highlightedSquare == None:
+                highlightedSquare = highlightSquare(side)
                 highlighted = True
             else:
                 highlightedSquare = None
                 highlighted = False
         
-
-    displayBoard(GREEN,TAN, highlightedSquare)
+    if side == "W":
+        displayBoard(GREEN,TAN, highlightedSquare)
+    else:
+        displayBoard(TAN,GREEN, highlightedSquare)
     legalMoves = calculateLegalMoves(board, highlightedSquare[0], highlightedSquare[1]) if highlightedSquare and highlighted else []
     drawLegalMoves(legalMoves)
     displayPieces(board)
