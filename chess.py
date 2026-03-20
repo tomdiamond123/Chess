@@ -255,6 +255,34 @@ def pawnMoves(board, col, row):
 
     return moves
 
+def kingCheck(board, col, row, side):
+    inCheck = False
+    moves = []
+    for r_idx, row_data in enumerate(board):
+        for c_idx, piece in enumerate(row_data):
+            if piece != "__" and piece[0] != side:
+                piece_type = piece[1]
+                if piece_type == "R":
+                    moves.extend(rookMoves(board, c_idx, r_idx))
+                elif piece_type == "B":
+                    moves.extend(bishopMoves(board, c_idx, r_idx))
+                elif piece_type == "N":
+                    moves.extend(knightMoves(board, c_idx, r_idx))
+                elif piece_type == "Q":
+                    moves.extend(queenMoves(board, c_idx, r_idx))
+                elif piece_type == "P":
+                    moves.extend(pawnMoves(board, c_idx, r_idx))
+                elif piece_type == "K":
+                    # Opponent king attacks adjacent squares
+                    directions = [(-1, -1), (1, -1), (-1, 1), (1, 1), (1,0), (0,1), (-1,0), (0,-1)]
+                    for dc, dr in directions:
+                        nr, nc = r_idx + dr, c_idx + dc
+                        if 0 <= nr < len(board) and 0 <= nc < len(board[0]):
+                            moves.append((nc, nr))
+    if (col, row) in moves:
+        inCheck = True
+    return inCheck
+
 def kingMoves(board, col, row):
     moves = []
     side = board[row][col][0]
@@ -264,7 +292,8 @@ def kingMoves(board, col, row):
     for dc, dr in directions:
         try:
             if board[row+dr][col+dc] == "__" or board[row+dr][col+dc][0] != side:
-                moves.append((col+dc, row+dr))
+                if not kingCheck(board, col+dc, row+dr, side):
+                    moves.append((col+dc, row+dr))
         except IndexError:
             #Checking square that doesn't exist
             pass
@@ -272,26 +301,51 @@ def kingMoves(board, col, row):
     return moves
 
 def calculateLegalMoves(board, col, row):
+    gameOver = False
+    inCheck = False
     moves = []
     if board[row][col] == "__":
         return moves
-    side = board[row][col][0]
+    
     piece = board[row][col][1]
+    side = board[row][col][0]
 
-    if piece == "R":
-        moves.extend(rookMoves(board, col, row))
-    elif piece == "B":
-        moves.extend(bishopMoves(board, col, row))
-    elif piece == "N":
-        moves.extend(knightMoves(board, col, row))
-    elif piece == "Q":
-        moves.extend(queenMoves(board, col, row))
-    elif piece == "P":
-        moves.extend(pawnMoves(board, col, row))
-    elif piece == "K":
-        moves.extend(kingMoves(board, col, row))
+    # Find the king position for the side of the piece
+    king_pos = None
+    for r_idx, row_data in enumerate(board):
+        for c_idx, p in enumerate(row_data):
+            if p[1] == "K" and p[0] == side:
+                king_pos = (c_idx, r_idx)
+                break
+        if king_pos:
+            break
 
-    return moves
+    if king_pos is None:
+        # King not found, possibly game over or invalid board
+        inCheck = False
+
+    else:
+        inCheck = kingCheck(board, king_pos[0], king_pos[1], side)
+    if not inCheck:
+        if piece == "R":
+            moves.extend(rookMoves(board, col, row))
+        elif piece == "B":
+            moves.extend(bishopMoves(board, col, row))
+        elif piece == "N":
+            moves.extend(knightMoves(board, col, row))
+        elif piece == "Q":
+            moves.extend(queenMoves(board, col, row))
+        elif piece == "P":
+            moves.extend(pawnMoves(board, col, row))
+        elif piece == "K":
+            moves.extend(kingMoves(board, col, row))
+    else:
+        if piece == "K":
+            moves.extend(kingMoves(board, col, row))
+            if not moves:
+                gameOver = True
+
+    return moves, gameOver
 
 def drawLegalMoves(moves):
     for move in moves:
@@ -331,7 +385,8 @@ while not exit:
                     side = "B"
                 else:
                     side = "W"
-                board = np.flip(board)
+                board = np.flipud(board)
+                board = np.fliplr(board)
                 highlightedSquare = None
                 highlighted = False
             elif highlightedSquare != highlightSquare(side) or highlightedSquare == None:
@@ -341,11 +396,10 @@ while not exit:
                 highlightedSquare = None
                 highlighted = False
         
-    if side == "W":
-        displayBoard(GREEN,TAN, highlightedSquare)
-    else:
-        displayBoard(TAN,GREEN, highlightedSquare)
-    legalMoves = calculateLegalMoves(board, highlightedSquare[0], highlightedSquare[1]) if highlightedSquare and highlighted else []
+    displayBoard(GREEN,TAN, highlightedSquare)
+    legalMoves, gameOver = (calculateLegalMoves(board, highlightedSquare[0], highlightedSquare[1]) if highlightedSquare and highlighted else ([], False))
+    if gameOver:
+        print("Game Over")
     drawLegalMoves(legalMoves)
     displayPieces(board)
 
